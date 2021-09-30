@@ -99,7 +99,7 @@ class Button():
 
 class OptionBox():
 
-    def __init__(self, x, y, w, h, col, highlight_col, font, option_list, selected=0):
+    def __init__(self, x, y, w, h, col, highlight_col, font, option_list, selected=-1):
         self.col = col
         self.highlight_col = highlight_col
         self.rect = pygame.Rect(x, y, w, h)
@@ -149,5 +149,5 @@ class OptionBox():
                 elif self.draw_menu and self.active_option >= 0:
                     self.selected = self.active_option
                     self.draw_menu = False
-                    return self.active_option
+                    return -2
         return -1

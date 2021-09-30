@@ -8,6 +8,10 @@ WIDTH = 900
 HEIGHT = WIDTH + OFFSET
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 
+diff = button.OptionBox(
+        40, 5, 160, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont("", 30),
+        ["Easy", "Medium", "Hard"],selected=0)
+
 MODS = [
     [-1,-1],
     [-1,0],
@@ -46,8 +50,8 @@ class Grid:
             square = random.randint(0, self.size[0] - 1), random.randint(0, self.size[1] - 1)
             invalid = True
             while invalid:
-                if self.grid[square[0]][square[1]].value == -1 or abs(self.grid[square[0]][square[1]].x - firstPos[0]) < 2\
-                    or abs(self.grid[square[0]][square[1]].y - firstPos[1]) < 2:
+                if self.grid[square[0]][square[1]].value == -1 or (abs(self.grid[square[0]][square[1]].x - firstPos[0]) < 3\
+                    and abs(self.grid[square[0]][square[1]].y - firstPos[1]) < 3):
                     square = random.randint(0, self.size[0] - 1), random.randint(0, self.size[1] - 1)
                 else:
                     neighbours = 0
@@ -56,7 +60,10 @@ class Grid:
                         p2 = square[1] + neighbour[1]
                         if 0 <= p1 <= self.size[0] - 1 and 0 <= p2 <= self.size[1] - 1:
                             if self.grid[p1][p2].value == -1: neighbours += 1
-                    if neighbours > 3: invalid = True
+                    if neighbours > (1+self.diff):
+                        invalid = True
+                        square = random.randint(0, self.size[0] - 1), random.randint(0, self.size[1] - 1)
+
                     else: invalid = False
             else:
                 self.grid[square[0]][square[1]].value = -1
@@ -118,20 +125,30 @@ class Square:
 def game_win(grid):
     for i in range(grid.size[0]):
         for j in range(grid.size[1]):
-            if grid.grid[i][j].value == -1: grid.grid[i][j].col = (0,0,0)
+            if grid.grid[i][j].value != -1:
+                grid.grid[j][i].col = (255,255,255)
+                grid.grid[j][i].revealed_col = (255,255,255)
+                grid.grid[j][i].hidden_col = (255,255,255)
+                grid.grid[j][i].hidden_highlight_col = (255,255,255)
+                grid.grid[j][i].revealed_highlight_col = (255,255,255)
+            time.sleep(0.005)
             grid.draw()
             pygame.display.update()
     time.sleep(0.5)
     for i in range(grid.size[0]):
         for j in range(grid.size[1]):
-            grid.grid[j][i].col = (255,255,255)
-            time.sleep(0.01)
+            if grid.grid[i][j].value == -1: grid.grid[i][j].revealed = True
             grid.draw()
             pygame.display.update()
+    time.sleep(0.5)
     for i in range(grid.size[0]):
         for j in range(grid.size[1]):
-            grid.grid[j][i].col = (0,0,0)
-            time.sleep(0.01)
+            grid.grid[j][i].col = (0, 0, 0)
+            grid.grid[j][i].revealed_col = (0, 0, 0)
+            grid.grid[j][i].hidden_col = (0, 0, 0)
+            grid.grid[j][i].hidden_highlight_col = (0, 0, 0)
+            grid.grid[j][i].revealed_highlight_col = (0, 0, 0)
+            time.sleep(0.005)
             grid.draw()
             pygame.display.update()
 
@@ -142,7 +159,6 @@ def check_win(grid):
             if grid.grid[i][j].value != -1 and not grid.grid[i][j].revealed: win = False
 
     if win:
-        print("hi")
         game_win(grid)
         return True
 
@@ -171,12 +187,12 @@ def clear_area(grid,pos):
         p1 = pos[0] + neighbour[0]
         p2 = pos[1] + neighbour[1]
         if 0 <= p1 <= grid.size[0] - 1 and 0 <= p2 <= grid.size[1] - 1:
-            if grid.grid[p1][p2].value is None and not grid.grid[p1][p2].revealed:
-                grid.grid[p1][p2].revealed = True
-                clear_area(grid,(p1,p2))
-            elif grid.grid[p1][p2].value is not None and grid.grid[pos[0]][pos[1]].value is None and not grid.grid[p1][p2].revealed and grid.grid[p1][p2].value != -1:
-                grid.grid[p1][p2].revealed = True
-        else: pass
+            if not grid.grid[p1][p2].revealed and grid.grid[p1][p2].value != -1:
+                if grid.grid[p1][p2].value is None:
+                    grid.grid[p1][p2].revealed = True
+                    clear_area(grid,(p1,p2))
+                elif grid.grid[p1][p2].value is not None and grid.grid[pos[0]][pos[1]].value is None:
+                    grid.grid[p1][p2].revealed = True
     return
 
 
@@ -218,12 +234,7 @@ def redraw_window(grid,list1):
 
 def main():
     clock = pygame.time.Clock()
-    d = 0
-    grid = Grid(d)
-
-    list1 = button.OptionBox(
-        40, 5, 160, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont("", 30),
-        ["option 1", "2nd option", "another option"])
+    grid = Grid(diff.selected)
 
     prev = None
     first_click = True
@@ -237,12 +248,12 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: pygame.quit()
                 elif event.key == pygame.K_r:
-                    grid = Grid(d)
+                    grid = Grid(diff.selected)
                     first_click = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouseX, mouseY = pygame.mouse.get_pos()
-                squareX, squareY = mouseX // grid.cube_width, (mouseY - grid.offset) // grid.cube_height
-                if
+                if not diff.draw_menu:
+                    mouseX, mouseY = pygame.mouse.get_pos()
+                    squareX, squareY = mouseX // grid.cube_width, (mouseY - grid.offset) // grid.cube_height
                     if mouseY > grid.offset:
                         if first_click: grid.assign_bombs((squareX,squareY))
 
@@ -250,11 +261,11 @@ def main():
                         if not clicked(grid): run = False
                         first_click = False
 
-        list1.update(events)
+        if (x := diff.update(events)) == -2: run = False
         if check_win(grid): run = False
         prev = hovering(grid, prev)
 
-        redraw_window(grid,list1)
+        redraw_window(grid,diff)
         pygame.display.update()
 
 
