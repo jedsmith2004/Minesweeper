@@ -1,4 +1,4 @@
-import pygame, random, time
+import pygame, random, time, button
 
 pygame.init()
 pygame.font.init()
@@ -75,7 +75,7 @@ class Grid:
             for i in range(self.size[0]):
                 square = self.grid[i][j]
                 cur = square.x * self.cube_width, square.y * self.cube_height + self.offset
-                if square.revealed:
+                if not square.revealed:
                     pygame.draw.rect(win, square.col, (cur[0], cur[1], self.cube_width, self.cube_height))
                 else:
                     half_cube_x = self.cube_width // 2
@@ -210,15 +210,20 @@ def clicked(grid):
     return True
 
 
-def redraw_window(grid):
+def redraw_window(grid,list1):
     win.fill((0, 0, 255))
     grid.draw()
+    list1.draw(win)
 
 
 def main():
     clock = pygame.time.Clock()
     d = 0
     grid = Grid(d)
+
+    list1 = button.OptionBox(
+        40, 5, 160, 40, (150, 150, 150), (100, 200, 255), pygame.font.SysFont("", 30),
+        ["option 1", "2nd option", "another option"])
 
     prev = None
     first_click = True
@@ -228,26 +233,28 @@ def main():
 
         events = pygame.event.get()
         for event in events:
-            if event.type == pygame.QUIT:
-                run = False
+            if event.type == pygame.QUIT:pygame.quit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE: run = False
+                if event.key == pygame.K_ESCAPE: pygame.quit()
                 elif event.key == pygame.K_r:
                     grid = Grid(d)
                     first_click = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouseX, mouseY = pygame.mouse.get_pos()
                 squareX, squareY = mouseX // grid.cube_width, (mouseY - grid.offset) // grid.cube_height
-                if first_click: grid.assign_bombs((squareX,squareY))
+                if
+                    if mouseY > grid.offset:
+                        if first_click: grid.assign_bombs((squareX,squareY))
 
-                if first_click or grid.grid[squareX][squareY].value is None: clear_area(grid,(squareX,squareY))
-                if not clicked(grid): run = False
-                first_click = False
+                        if first_click or grid.grid[squareX][squareY].value is None: clear_area(grid,(squareX,squareY))
+                        if not clicked(grid): run = False
+                        first_click = False
 
+        list1.update(events)
         if check_win(grid): run = False
         prev = hovering(grid, prev)
 
-        redraw_window(grid)
+        redraw_window(grid,list1)
         pygame.display.update()
 
 
